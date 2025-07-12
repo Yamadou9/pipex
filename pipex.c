@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 12:55:00 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/12 17:29:01 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/07/12 17:32:12 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ void	first(char **av, int *p_nb)
 	dup2(p_nb[1], 1);
 	close(infile);
 	execve(all_cmd, cmd, NULL);
-	printf("bjr");
+	perror("execve");
 	return ;
 }
 
@@ -54,7 +54,7 @@ void	second(char **av, int *p_nb)
 	dup2(p_nb[0], 0);
 	close(outfile);
 	execve(all_cmd, cmd, NULL);
-	printf("bjr");
+	perror("execve");
 }
 
 int	main(int ac, char **av)
