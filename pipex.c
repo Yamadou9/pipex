@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 12:55:00 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/13 16:07:46 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/07/13 21:35:36 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ char	*ft_env(char **env, char *cmd)
 	{
 		path = ft_strjoin(ft_strjoin(local[i], "/"), cmd);
 		if (!path)
-			return (0);
+			return (free(local), NULL);
 		if (access(path, F_OK | X_OK) == 0)
 			return (free(local), path);
 		i++;
@@ -55,7 +55,7 @@ int	first(char **av, int *p_nb, char **env)
 		return (0);
 	all_cmd = ft_env(env, cmd[0]);
 	if (!all_cmd)
-		return (0);
+		return (free_all(cmd), 0);
 	infile = open(av[1], O_RDONLY);
 	if (infile < 0)
 		return (0);
@@ -106,6 +106,7 @@ int	main(int ac, char **av, char **env)
 	pid = fork();
 	if (pid < 0)
 		return (0);
+	__builtin_printf("gggggggggggg\n");
 	if (pid == 0)
 	{
 		if (!first(av, p_nb, env))

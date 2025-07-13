@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/28 16:49:15 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/12 17:40:32 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/07/13 21:25:40 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,6 +84,8 @@ char	**ft_split(char const *s, char c)
 
 	i = 0;
 	j = 0;
+	if (!s)
+		return (NULL);
 	res = malloc(sizeof(char *) * (ft_countword(s, c) + 1));
 	if (res == NULL)
 		return (NULL);
