@@ -6,15 +6,11 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/28 16:49:15 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/12 16:21:39 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/07/12 17:40:32 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "pipex.h"
 
 size_t	ft_strlen(const char *s);
 

@@ -6,58 +6,97 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 12:55:00 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/12 17:32:12 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/07/13 16:07:46 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include "pipex.h"
 
-char	*ft_strjoin(char const *s1, char const *s2);
-char	**ft_split(char const *s, char c);
+char	*ft_env(char **env, char *cmd)
+{
+	int		i;
+	char	*path;
+	char	**local;
 
-void	first(char **av, int *p_nb)
+	i = 0;
+	while (env[i])
+	{
+		if (ft_strncmp("PATH=", env[i], 5) == 0)
+		{
+			local = ft_split(env[i] + 5, ':');
+			if (!local)
+				return (0);
+		}
+		i++;
+	}
+	i = 0;
+	if (!local)
+		return (0);
+	while (local[i])
+	{
+		path = ft_strjoin(ft_strjoin(local[i], "/"), cmd);
+		if (!path)
+			return (0);
+		if (access(path, F_OK | X_OK) == 0)
+			return (free(local), path);
+		i++;
+	}
+	return (free(local), free(path), NULL);
+}
+
+int	first(char **av, int *p_nb, char **env)
 {
 	int		infile;
 	char	**cmd;
 	char	*all_cmd;
 
 	cmd = ft_split(av[2], ' ');
-	all_cmd = ft_strjoin("/bin/", cmd[0]);
+	if (!cmd)
+		return (0);
+	all_cmd = ft_env(env, cmd[0]);
+	if (!all_cmd)
+		return (0);
 	infile = open(av[1], O_RDONLY);
 	if (infile < 0)
-		return ;
+		return (0);
 	dup2(infile, 0);
 	dup2(p_nb[1], 1);
 	close(infile);
 	execve(all_cmd, cmd, NULL);
 	perror("execve");
-	return ;
+	return (0);
 }
 
-void	second(char **av, int *p_nb)
+int	second(char **av, int *p_nb, char **env, pid_t	pid)
 {
 	int		outfile;
 	char	**cmd;
 	char	*all_cmd;
 
+	if (waitpid(pid, NULL, 0) == -1)
+	{
+		perror("wait");
+		close(p_nb[1]);
+		return (0);
+	}
 	cmd = ft_split(av[3], ' ');
-	all_cmd = ft_strjoin("/bin/", cmd[0]);
-	outfile = open(av[4], O_RDWR);
+	if (!cmd)
+		return (0);
+	all_cmd = ft_env(env, cmd[0]);
+	if (!all_cmd)
+		return (0);
+	outfile = open(av[4], O_WRONLY | O_TRUNC | O_CREAT, 0777);
 	if (outfile < 0)
-		return ;
+		return (0);
 	close(p_nb[1]);
 	dup2(outfile, 1);
 	dup2(p_nb[0], 0);
 	close(outfile);
-	execve(all_cmd, cmd, NULL);
-	perror("execve");
+	execve(all_cmd, cmd, env);
+	return (perror("execve"), 0);
 }
 
-int	main(int ac, char **av)
+int	main(int ac, char **av, char **env)
 {
 	pid_t	pid;
 	int		p_nb[2];
@@ -69,10 +108,12 @@ int	main(int ac, char **av)
 		return (0);
 	if (pid == 0)
 	{
-		first(av, p_nb);
+		if (!first(av, p_nb, env))
+			return (perror("first"), 0);
 	}
-	else
-		second(av, p_nb);
+	second(av, p_nb, env, pid);
+	perror("Second");
+	return (0);
 }
 
 // int      main()

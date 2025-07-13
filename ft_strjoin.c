@@ -6,15 +6,23 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/28 16:31:38 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/12 16:21:47 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/07/13 15:23:26 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "pipex.h"
+
+int	ft_strncmp(char *s1, char *s2, int n)
+{
+	int	i;
+
+	i = 0;
+	if (!s1 || !s2)
+		return (-1);
+	while (s1[i] && s2[i] && s1[i] == s2[i] && i < n - 1)
+		i++;
+	return (s1[i] - s2[i]);
+}
 
 size_t	ft_strlen(const char *s)
 {
