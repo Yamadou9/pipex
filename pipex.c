@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 12:55:00 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/13 21:35:36 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/07/15 17:56:28 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,10 +38,10 @@ char	*ft_env(char **env, char *cmd)
 		if (!path)
 			return (free(local), NULL);
 		if (access(path, F_OK | X_OK) == 0)
-			return (free(local), path);
+			return (free_all(local), path);
 		i++;
 	}
-	return (free(local), free(path), NULL);
+	return (free_all(local), free(path), NULL);
 }
 
 int	first(char **av, int *p_nb, char **env)
@@ -62,9 +62,9 @@ int	first(char **av, int *p_nb, char **env)
 	dup2(infile, 0);
 	dup2(p_nb[1], 1);
 	close(infile);
-	execve(all_cmd, cmd, NULL);
+	execve(all_cmd, cmd, env);
 	perror("execve");
-	return (0);
+	return (free(all_cmd), free_all(cmd), 0);
 }
 
 int	second(char **av, int *p_nb, char **env, pid_t	pid)
@@ -84,16 +84,16 @@ int	second(char **av, int *p_nb, char **env, pid_t	pid)
 		return (0);
 	all_cmd = ft_env(env, cmd[0]);
 	if (!all_cmd)
-		return (0);
+		return (free_all(cmd), 0);
 	outfile = open(av[4], O_WRONLY | O_TRUNC | O_CREAT, 0777);
 	if (outfile < 0)
-		return (0);
+		return (free_all(cmd), free(all_cmd), 0);
 	close(p_nb[1]);
 	dup2(outfile, 1);
 	dup2(p_nb[0], 0);
 	close(outfile);
 	execve(all_cmd, cmd, env);
-	return (perror("execve"), 0);
+	return (free(all_cmd), free_all(cmd), 0);
 }
 
 int	main(int ac, char **av, char **env)
@@ -106,7 +106,6 @@ int	main(int ac, char **av, char **env)
 	pid = fork();
 	if (pid < 0)
 		return (0);
-	__builtin_printf("gggggggggggg\n");
 	if (pid == 0)
 	{
 		if (!first(av, p_nb, env))
