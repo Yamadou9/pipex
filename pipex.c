@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 12:55:00 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/15 17:56:28 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/07/15 18:15:40 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,13 +52,13 @@ int	first(char **av, int *p_nb, char **env)
 
 	cmd = ft_split(av[2], ' ');
 	if (!cmd)
-		return (0);
+		return (perror("split"), 0);
 	all_cmd = ft_env(env, cmd[0]);
 	if (!all_cmd)
 		return (free_all(cmd), 0);
 	infile = open(av[1], O_RDONLY);
 	if (infile < 0)
-		return (0);
+		return (perror("open"), free_all(cmd), free(all_cmd), exit(1), 0);
 	dup2(infile, 0);
 	dup2(p_nb[1], 1);
 	close(infile);
@@ -75,22 +75,21 @@ int	second(char **av, int *p_nb, char **env, pid_t	pid)
 
 	if (waitpid(pid, NULL, 0) == -1)
 	{
-		perror("wait");
 		close(p_nb[1]);
-		return (0);
+		return (perror("wait"), 0);
 	}
 	cmd = ft_split(av[3], ' ');
 	if (!cmd)
-		return (0);
+		return (perror("split"), 0);
 	all_cmd = ft_env(env, cmd[0]);
 	if (!all_cmd)
 		return (free_all(cmd), 0);
 	outfile = open(av[4], O_WRONLY | O_TRUNC | O_CREAT, 0777);
 	if (outfile < 0)
-		return (free_all(cmd), free(all_cmd), 0);
+		return (perror("open"), free_all(cmd), free(all_cmd), 0);
 	close(p_nb[1]);
-	dup2(outfile, 1);
-	dup2(p_nb[0], 0);
+	if (dup2(outfile, 1) == -1 || dup2(p_nb[0], 0) == -1)
+		return (free(all_cmd), free_all(cmd), close(p_nb[0]), close(outfile), 0);
 	close(outfile);
 	execve(all_cmd, cmd, env);
 	return (free(all_cmd), free_all(cmd), 0);
