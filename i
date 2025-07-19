@@ -1,7 +1,13 @@
+1
 a.out
+cat
 dd
 ft_split.c
 ft_strjoin.c
+i
 pipex.c
 pipex.h
-test.txt
+plp
+ree
+reegf
+result.txt
