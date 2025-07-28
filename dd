@@ -1,7 +1,0 @@
-a.out
-dd
-ft_split.c
-ft_strjoin.c
-pipex.c
-pipex.h
-test.txt

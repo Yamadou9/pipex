@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 12:57:02 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/13 21:34:12 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/07/28 15:43:30 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,19 @@
 # include <fcntl.h>
 # include <stdlib.h>
 # include <stdio.h>
-#include <sys/wait.h>
+# include <sys/wait.h>
+
+typedef struct t_pipex
+{
+	int		infile;
+	int		outfl;
+	char	**cmd;
+	char	*all_cmd;
+	char	*path;
+	char	**local;
+	int		p_nb[2];
+	int		i;
+}	t_x;
 
 char	*ft_strjoin(char const *s1, char const *s2);
 char	**ft_split(char const *s, char c);

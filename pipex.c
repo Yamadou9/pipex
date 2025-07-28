@@ -6,136 +6,130 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 12:55:00 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/19 16:38:00 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/07/28 16:53:07 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-void	exit_error(char *msg, char **cmd, char *all_cmd, int fd1)
+char	*ft_strslashjoin(char const *s1, char const *s2);
+
+void	exit_error(char *msg, t_x x, int i)
 {
-	if (msg)
+	if (!msg)
+		printf("%s: command not found\n", x.cmd[0]);
+	else if (msg)
 		perror(msg);
-	if (cmd)
-		free_all(cmd);
-	if (all_cmd)
-		free(all_cmd);
-	if (fd1 >= 0)
-		close(fd1);
+	if (x.all_cmd != NULL)
+		free(x.all_cmd);
+	if (x.cmd != NULL)
+		free_all(x.cmd);
+	if (i == 1 && x.outfl >= 0)
+		close(x.outfl);
+	if (i == 1 && x.p_nb[1] >= 0)
+		close(x.p_nb[1]);
+	if (i == 2 && x.infile >= 0)
+		close(x.infile);
+	if (i == 2 && x.p_nb[0] >= 0)
+		close(x.p_nb[0]);
 	exit(EXIT_FAILURE);
 }
 
-char	*ft_env(char **env, char *cmd)
+char	*ft_env(char **env, char *cmd, t_x x)
 {
-	int		i;
-	char	*path;
-	char	**local;
-
-	i = 0;
-	while (env[i])
+	x.local = NULL;
+	x.path = NULL;
+	x.i = 0;
+	while (env[x.i++])
 	{
-		if (ft_strncmp("PATH=", env[i], 5) == 0)
+		if (ft_strncmp("PATH=", env[x.i], 5) == 0)
 		{
-			local = ft_split(env[i] + 5, ':');
-			if (!local)
+			x.local = ft_split(env[x.i] + 5, ':');
+			if (!x.local)
 				return (0);
 		}
-		i++;
 	}
-	i = 0;
-	if (!local)
+	x.i = 0;
+	if (!x.local)
 		return (0);
-	while (local[i])
+	while (x.local[x.i++])
 	{
-		path = ft_strjoin(ft_strjoin(local[i], "/"), cmd);
-		if (!path)
-			return (free(local), NULL);
-		if (access(path, F_OK | X_OK) == 0)
-			return (free_all(local), path);
-		i++;
+		x.path = ft_strslashjoin(x.local[x.i], cmd);
+		if (!x.path)
+			return (free_all(x.local), NULL);
+		if (access(x.path, F_OK | X_OK) == 0)
+			return (free_all(x.local), x.path);
+		free(x.path);
 	}
-	perror("acces");
-	return (free_all(local), free(path), NULL);
+	return (free_all(x.local), free(x.path), NULL);
 }
 
-void	first(char **av, int *p_nb, char **env)
+void	first(char **av, t_x x, char **env)
 {
-	int		infile;
-	char	**cmd;
-	char	*all_cmd;
-
-	infile = open(av[1], O_RDONLY);
-	if (infile < 0)
-		exit_error("open", NULL, NULL, -1);
-	cmd = ft_split(av[2], ' ');
-	if (!cmd)
-		exit_error("split", NULL, NULL, infile);
-	all_cmd = ft_env(env, cmd[0]);
-	if (!all_cmd)
-	{
-		close(p_nb[0]);
-		exit_error("ft_env", cmd, NULL, infile);
-	}
-	if (dup2(infile, 0) == -1 || dup2(p_nb[1], 1) == -1)
-	{
-		close(p_nb[0]);
-		exit_error("dup2", cmd, all_cmd, infile);
-	}
-	close(infile);
-	execve(all_cmd, cmd, env);
-	close(p_nb[0]);
-	exit_error("execve", cmd, all_cmd, infile);
+	x.infile = open(av[1], O_RDONLY);
+	if (x.infile < 0)
+		exit_error("open", x, 2);
+	x.cmd = ft_split(av[2], ' ');
+	if (!x.cmd)
+		exit_error("split", x, 2);
+	x.all_cmd = ft_env(env, x.cmd[0], x);
+	if (!x.all_cmd)
+		exit_error(NULL, x, 0);
+	if (dup2(x.infile, 0) == -1 || dup2(x.p_nb[1], 1) == -1)
+		exit_error("dup2", x, 2);
+	close(x.infile);
+	execve(x.all_cmd, x.cmd, env);
+	close(x.p_nb[0]);
+	exit_error("execve", x, 2);
 }
 
-void	second(char **av, int *p_nb, char **env, pid_t	pid)
+void	second(char **av, t_x x, char **env, pid_t	pid)
 {
-	int		outfl;
-	char	**cmd;
-	char	*all_cmd;
-
 	if (waitpid(pid, NULL, 0) == -1)
-		exit_error("wait", NULL, NULL, p_nb[0]);
-	outfl = open(av[4], O_WRONLY | O_TRUNC | O_CREAT, 0777);
-	if (outfl < 0)
-		exit_error("open", NULL, NULL, p_nb[0]);
-	cmd = ft_split(av[3], ' ');
-	if (!cmd)
-	{
-		close(outfl);
-		exit_error("split", NULL, NULL, p_nb[0]);
-	}
-	all_cmd = ft_env(env, cmd[0]);
-	if (!all_cmd)
-	{
-		close(outfl);
-		exit_error("command", cmd, NULL, p_nb[0]);
-	}
-	close(p_nb[1]);
-	if (dup2(outfl, 1) == -1 || dup2(p_nb[0], 0) == -1)
-	{
-		close(outfl);
-		exit_error("open", cmd, all_cmd, p_nb[0]);
-	}
-	close(outfl);
-	execve(all_cmd, cmd, env);
-	exit_error("open", cmd, all_cmd, p_nb[0]);
+		exit_error("wait", x, 1);
+	x.outfl = open(av[4], O_WRONLY | O_TRUNC | O_CREAT, 0777);
+	if (x.outfl < 0)
+		exit_error("open", x, 1);
+	x.cmd = ft_split(av[3], ' ');
+	if (!x.cmd)
+		exit_error("split", x, 1);
+	x.all_cmd = ft_env(env, x.cmd[0], x);
+	if (!x.all_cmd)
+		exit_error(NULL, x, 1);
+	close(x.p_nb[1]);
+	if (dup2(x.outfl, 1) == -1 || dup2(x.p_nb[0], 0) == -1)
+		exit_error("dup2", x, 1);
+	close(x.outfl);
+	execve(x.all_cmd, x.cmd, env);
+	exit_error("execve", x, 1);
+}
+
+void	null_function(t_x *x)
+{
+	(*x).all_cmd = NULL;
+	(*x).cmd = NULL;
+	(*x).path = NULL;
+	(*x).local = NULL;
 }
 
 int	main(int ac, char **av, char **env)
 {
 	pid_t	pid;
-	int		p_nb[2];
+	t_x		x;
 
+	if (!env)
+		return (0);
 	if (ac != 5)
 		return (0);
-	if (pipe(p_nb) == -1)
+	if (pipe(x.p_nb) == -1)
 		return (0);
+	null_function(&x);
 	pid = fork();
 	if (pid < 0)
 		return (0);
 	if (pid == 0)
-		first(av, p_nb, env);
-	second(av, p_nb, env, pid);
+		first(av, x, env);
+	second(av, x, env, pid);
 	perror("Second");
 	return (0);
 }
