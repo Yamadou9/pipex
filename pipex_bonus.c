@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pipex.c                                            :+:      :+:    :+:   */
+/*   pipex_bonus.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/07/12 12:55:00 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/29 17:29:45 by ydembele         ###   ########.fr       */
+/*   Created: 2025/07/29 15:12:51 by ydembele          #+#    #+#             */
+/*   Updated: 2025/07/29 17:05:11 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "pipex.h"
+#include "pipex_bonus.h"
 
 char	*ft_strslashjoin(char const *s1, char const *s2);
 
@@ -83,31 +83,37 @@ void	first(char **av, t_x x, char **env)
 	exit_error("execve", x, 2);
 }
 
-void	second(char **av, t_x x, char **env, pid_t to_wait)
+void	do_cmd(t_x x, char **env, int i, char *commande)
 {
-	pid_t	pid;
+	x.cmd = ft_split(commande, ' ');
+	if (!x.cmd)
+		exit_error("split", x, 1);
+	x.all_cmd = ft_env(env, x.cmd[0], x);
+	if (!x.all_cmd)
+		exit_error(NULL, x, 1);
+	execve(x.all_cmd, x.cmd, env);
+	exit_error("execve", x, 1);
+}
 
-	pid = fork();
-	if (pid == 0)
-	{
-		x.outfl = open(av[4], O_WRONLY | O_TRUNC | O_CREAT, 0777);
-		if (x.outfl < 0)
-			exit_error("open", x, 1);
-		x.cmd = ft_split(av[3], ' ');
-		if (!x.cmd)
-			exit_error("split", x, 1);
-		x.all_cmd = ft_env(env, x.cmd[0], x);
-		if (!x.all_cmd)
-			exit_error(NULL, x, 1);
-		close(x.p_nb[1]);
-		if (dup2(x.outfl, 1) == -1 || dup2(x.p_nb[0], 0) == -1)
-			exit_error("dup2", x, 1);
-		close(x.outfl);
-		execve(x.all_cmd, x.cmd, env);
-		exit_error("execve", x, 1);
-	}
-	waitpid(pid, NULL, 0);
-	waitpid(to_wait, NULL, 0);
+void	second(char **av, t_x x, char **env, pid_t	pid)
+{
+	if (waitpid(pid, NULL, 0) == -1)
+		exit_error("wait", x, 1);
+	x.outfl = open(av[4], O_WRONLY | O_TRUNC | O_CREAT, 0777);
+	if (x.outfl < 0)
+		exit_error("open", x, 1);
+	x.cmd = ft_split(av[3], ' ');
+	if (!x.cmd)
+		exit_error("split", x, 1);
+	x.all_cmd = ft_env(env, x.cmd[0], x);
+	if (!x.all_cmd)
+		exit_error(NULL, x, 1);
+	close(x.p_nb[1]);
+	if (dup2(x.outfl, 1) == -1 || dup2(x.p_nb[0], 0) == -1)
+		exit_error("dup2", x, 1);
+	close(x.outfl);
+	execve(x.all_cmd, x.cmd, env);
+	exit_error("execve", x, 1);
 }
 
 void	null_function(t_x *x)
@@ -118,7 +124,7 @@ void	null_function(t_x *x)
 	(*x).local = NULL;
 }
 
-int	main(int ac, char **av, char **env)
+/*int	main(int ac, char **av, char **env)
 {
 	pid_t	pid;
 	t_x		x;
@@ -136,7 +142,63 @@ int	main(int ac, char **av, char **env)
 	if (pid == 0)
 		first(av, x, env);
 	second(av, x, env, pid);
-	
-	//perror("Second");
+	perror("Second");
 	return (0);
+}*/
+
+int	main(int ac, char **av, char **env)
+{
+	pid_t	pid;
+	t_x		x;
+	int		i;
+
+	i = 3;
+	if (!env)
+		return (0);
+	x.infile = open(av[1], O_RDONLY);
+	if (x.infile < 0)
+		exit_error("open", x, 2);
+	x.outfl = open(av[ac - 1], O_WRONLY | O_TRUNC | O_CREAT, 0777);
+	if (x.outfl < 0)
+		exit_error("open", x, 1);
+	x.prev_nb[0] = -1;
+	x.prev_nb[1] = -1;
+	while (i++ < ac - 1)
+	{
+		if (pipe(x.p_nb) == -1)
+			return (0);
+		null_function(&x);
+		pid = fork();
+		if (pid < 0)
+			return (0);
+		if (pid == 0)
+		{
+			if (i == 3)
+				dup2(x.infile, 0);
+			else
+				dup2(x.prev_nb[0], 0);
+			if (i == ac - 1)
+				dup2(x.outfl, 1);
+			else
+				dup2(x.p_nb[1], 1);
+			close(x.infile);
+			close(x.outfl);
+			close(x.p_nb[0]);
+			close(x.p_nb[1]);
+			if (i != 3)
+				close(x.prev_nb[0]);
+			do_cmd(x, env, i, av[i - 1]);
+		}
+		else
+		{
+			
+			close(x.prev_nb[0]);
+			close(x.prev_nb[1]);
+			x.prev_nb[0] = x.p_nb[0];
+			x.prev_nb[1] = x.p_nb[1];
+		}
+	}
+
+	
+	
 }
