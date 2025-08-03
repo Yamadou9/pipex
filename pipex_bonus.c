@@ -151,8 +151,11 @@ int	main(int ac, char **av, char **env)
 	pid_t	pid;
 	t_x		x;
 	int		i;
+	int		n_pid;
+	int		nbcmd = 2;
 
-	i = 3;
+	n_pid = 0;
+	i = 2;
 	if (!env)
 		return (0);
 	x.infile = open(av[1], O_RDONLY);
@@ -161,44 +164,54 @@ int	main(int ac, char **av, char **env)
 	x.outfl = open(av[ac - 1], O_WRONLY | O_TRUNC | O_CREAT, 0777);
 	if (x.outfl < 0)
 		exit_error("open", x, 1);
+	x.pid = malloc(sizeof(int) * (ac - 2));
+	if (!x.pid)
+		exit_error("malloc", x, 1);
 	x.prev_nb[0] = -1;
 	x.prev_nb[1] = -1;
-	while (i++ < ac - 1)
+	x.pid[n_pid] = fork();
+	if (x.pid[n_pid] == 0)
 	{
-		if (pipe(x.p_nb) == -1)
-			return (0);
-		null_function(&x);
-		pid = fork();
-		if (pid < 0)
-			return (0);
-		if (pid == 0)
+		while (i++ < ac - 1)
 		{
-			if (i == 3)
-				dup2(x.infile, 0);
+			n_pid++;
+			if (pipe(x.p_nb) == -1)
+				return (0);
+			null_function(&x);
+			x.pid[n_pid] = fork();
+			if (x.pid[n_pid] < 0)
+				return (0);
+			if (x.pid[n_pid] == 0)
+			{
+				if (nbcmd == 2)
+					dup2(x.infile, 0);
+				else
+					dup2(x.prev_nb[0], 0);
+				if (nbcmd == ac - 1)
+					dup2(x.outfl, 1);
+				else
+					dup2(x.p_nb[1], 1);
+				close(x.infile);
+				close(x.outfl);
+				close(x.p_nb[0]);
+				close(x.p_nb[1]);
+				if (i != 3)
+					close(x.prev_nb[0]);
+				nbcmd++;
+				do_cmd(x, env, i, av[nbcmd - 1]);
+			}
 			else
-				dup2(x.prev_nb[0], 0);
-			if (i == ac - 1)
-				dup2(x.outfl, 1);
-			else
-				dup2(x.p_nb[1], 1);
-			close(x.infile);
-			close(x.outfl);
-			close(x.p_nb[0]);
-			close(x.p_nb[1]);
-			if (i != 3)
-				close(x.prev_nb[0]);
-			do_cmd(x, env, i, av[i - 1]);
-		}
-		else
-		{
-			
-			close(x.prev_nb[0]);
-			close(x.prev_nb[1]);
-			x.prev_nb[0] = x.p_nb[0];
-			x.prev_nb[1] = x.p_nb[1];
+			{
+				perror("fffff");
+				x.prev_nb[0] = x.p_nb[0];
+				x.prev_nb[1] = x.p_nb[1];
+			}
 		}
 	}
-
-	
-	
+	i = 0;
+	while(x.pid[i])
+	{
+		waitpid(x.pid[i], NULL, 0);
+		i++;
+	}
 }

@@ -31,6 +31,7 @@ typedef struct t_pipex
 	char	**local;
 	int		p_nb[2];
 	int		prev_nb[2];
+	int		*pid;
 	int		i;
 }	t_x;
 
