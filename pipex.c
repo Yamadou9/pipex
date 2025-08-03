@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 12:55:00 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/29 17:29:45 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/08/03 16:45:08 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,9 +103,13 @@ void	second(char **av, t_x x, char **env, pid_t to_wait)
 		if (dup2(x.outfl, 1) == -1 || dup2(x.p_nb[0], 0) == -1)
 			exit_error("dup2", x, 1);
 		close(x.outfl);
+		close(x.p_nb[0]);
+		close(x.p_nb[1]);
 		execve(x.all_cmd, x.cmd, env);
 		exit_error("execve", x, 1);
 	}
+	close(x.p_nb[0]);
+	close(x.p_nb[1]);
 	waitpid(pid, NULL, 0);
 	waitpid(to_wait, NULL, 0);
 }
@@ -122,11 +126,10 @@ int	main(int ac, char **av, char **env)
 {
 	pid_t	pid;
 	t_x		x;
+	int		status;
 
-	if (!env)
-		return (0);
-	if (ac != 5)
-		return (0);
+	if (!env || ac != 5)
+		return (1);
 	if (pipe(x.p_nb) == -1)
 		return (0);
 	null_function(&x);
@@ -135,8 +138,9 @@ int	main(int ac, char **av, char **env)
 		return (0);
 	if (pid == 0)
 		first(av, x, env);
+	waitpid(pid, &status, 0);
+	if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+		return (WEXITSTATUS(status));
 	second(av, x, env, pid);
-	
-	//perror("Second");
 	return (0);
 }

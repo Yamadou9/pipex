@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 15:12:51 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/29 17:05:11 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/08/03 16:30:31 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -148,70 +148,60 @@ void	null_function(t_x *x)
 
 int	main(int ac, char **av, char **env)
 {
-	pid_t	pid;
 	t_x		x;
 	int		i;
 	int		n_pid;
-	int		nbcmd = 2;
 
-	n_pid = 0;
 	i = 2;
-	if (!env)
-		return (0);
+	n_pid = 0;
+	if (ac < 5 || !env)
+		return (1);
 	x.infile = open(av[1], O_RDONLY);
-	if (x.infile < 0)
-		exit_error("open", x, 2);
-	x.outfl = open(av[ac - 1], O_WRONLY | O_TRUNC | O_CREAT, 0777);
-	if (x.outfl < 0)
+	x.outfl = open(av[ac - 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (x.infile < 0 || x.outfl < 0)
 		exit_error("open", x, 1);
-	x.pid = malloc(sizeof(int) * (ac - 2));
+	x.pid = malloc(sizeof(pid_t) * (ac - 3));
 	if (!x.pid)
 		exit_error("malloc", x, 1);
 	x.prev_nb[0] = -1;
-	x.prev_nb[1] = -1;
-	x.pid[n_pid] = fork();
-	if (x.pid[n_pid] == 0)
+	while (++i < ac - 1)
 	{
-		while (i++ < ac - 1)
+		if (pipe(x.p_nb) < 0)
+			exit_error("pipe", x, 1);
+		x.pid[n_pid] = fork();
+		if (x.pid[n_pid] < 0)
+			exit_error("fork", x, 1);
+		if (x.pid[n_pid] == 0)
 		{
-			n_pid++;
-			if (pipe(x.p_nb) == -1)
-				return (0);
-			null_function(&x);
-			x.pid[n_pid] = fork();
-			if (x.pid[n_pid] < 0)
-				return (0);
-			if (x.pid[n_pid] == 0)
-			{
-				if (nbcmd == 2)
-					dup2(x.infile, 0);
-				else
-					dup2(x.prev_nb[0], 0);
-				if (nbcmd == ac - 1)
-					dup2(x.outfl, 1);
-				else
-					dup2(x.p_nb[1], 1);
-				close(x.infile);
-				close(x.outfl);
-				close(x.p_nb[0]);
-				close(x.p_nb[1]);
-				if (i != 3)
-					close(x.prev_nb[0]);
-				nbcmd++;
-				do_cmd(x, env, i, av[nbcmd - 1]);
-			}
+			if (i == 2)
+				dup2(x.infile, 0);
 			else
-			{
-				perror("fffff");
-				x.prev_nb[0] = x.p_nb[0];
-				x.prev_nb[1] = x.p_nb[1];
-			}
+				dup2(x.prev_nb[0], 0);
+			if (i == ac - 2)
+				dup2(x.outfl, 1);
+			else
+				dup2(x.p_nb[1], 1);
+			close(x.infile);
+			close(x.outfl);
+			close(x.p_nb[0]);
+			close(x.p_nb[1]);
+			if (x.prev_nb[0] != -1)
+				close(x.prev_nb[0]);
+			do_cmd(x, env, i, av[i]);
+			exit_error(NULL, x, i);
+		}
+		else
+		{
+			if (x.prev_nb[0] != -1)
+				close(x.prev_nb[0]);
+			close(x.p_nb[1]);
+			x.prev_nb[0] = x.p_nb[0];
+			n_pid++;
 		}
 	}
 	i = 0;
-	while(x.pid[i])
-	{
+	while (i++ < n_pid)
 		waitpid(x.pid[i], NULL, 0);
-		i++;
-	}
+	free(x.pid);
+	return (0);
 }
