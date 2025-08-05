@@ -1,0 +1,5 @@
+nofnoinfnfnoifnfnnoinin
+vV
+dsvnjknkljnsb
+sdbnkjbbbbbbbbbbbbbbbbbbbbbbbbbbbsbkm./pipex_bonus infile "cat" "wc -l" /dev/stdout
+

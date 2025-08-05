@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 12:55:00 by ydembele          #+#    #+#             */
-/*   Updated: 2025/08/03 16:45:08 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/08/05 16:12:28 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,10 +85,10 @@ void	first(char **av, t_x x, char **env)
 
 void	second(char **av, t_x x, char **env, pid_t to_wait)
 {
-	pid_t	pid;
-
-	pid = fork();
-	if (pid == 0)
+	x.pid2 = fork();
+	if (x.pid2 < 0)
+		return ;
+	if (x.pid2 == 0)
 	{
 		x.outfl = open(av[4], O_WRONLY | O_TRUNC | O_CREAT, 0777);
 		if (x.outfl < 0)
@@ -102,24 +102,13 @@ void	second(char **av, t_x x, char **env, pid_t to_wait)
 		close(x.p_nb[1]);
 		if (dup2(x.outfl, 1) == -1 || dup2(x.p_nb[0], 0) == -1)
 			exit_error("dup2", x, 1);
-		close(x.outfl);
-		close(x.p_nb[0]);
-		close(x.p_nb[1]);
+		my_close(x.outfl, x.p_nb[0], x.p_nb[1], -1);
 		execve(x.all_cmd, x.cmd, env);
 		exit_error("execve", x, 1);
 	}
-	close(x.p_nb[0]);
-	close(x.p_nb[1]);
-	waitpid(pid, NULL, 0);
+	my_close(x.p_nb[0], x.p_nb[1], -1, -1);
+	waitpid(x.pid2, NULL, 0);
 	waitpid(to_wait, NULL, 0);
-}
-
-void	null_function(t_x *x)
-{
-	(*x).all_cmd = NULL;
-	(*x).cmd = NULL;
-	(*x).path = NULL;
-	(*x).local = NULL;
 }
 
 int	main(int ac, char **av, char **env)
@@ -128,7 +117,7 @@ int	main(int ac, char **av, char **env)
 	t_x		x;
 	int		status;
 
-	if (!env || ac != 5)
+	if (!*env || ac != 5)
 		return (1);
 	if (pipe(x.p_nb) == -1)
 		return (0);
@@ -138,9 +127,6 @@ int	main(int ac, char **av, char **env)
 		return (0);
 	if (pid == 0)
 		first(av, x, env);
-	waitpid(pid, &status, 0);
-	if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-		return (WEXITSTATUS(status));
 	second(av, x, env, pid);
 	return (0);
 }
