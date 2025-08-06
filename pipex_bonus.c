@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 15:12:51 by ydembele          #+#    #+#             */
-/*   Updated: 2025/08/05 16:15:42 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/08/06 16:32:44 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,14 +116,6 @@ void	do_cmd(t_x x, char **env, int i, char *commande)
 // 	exit_error("execve", x, 1);
 // }
 
-void	null_function(t_x *x)
-{
-	(*x).all_cmd = NULL;
-	(*x).cmd = NULL;
-	(*x).path = NULL;
-	(*x).local = NULL;
-}
-
 /*int	main(int ac, char **av, char **env)
 {
 	pid_t	pid;
@@ -145,59 +137,88 @@ void	null_function(t_x *x)
 	perror("Second");
 	return (0);
 }*/
+void	initialisation(t_x *x, char **av, int ac)
+{
+	(*x).infile = open(av[1], O_RDONLY);
+	(*x).outfl = open(av[ac - 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if ((*x).infile < 0 || (*x).outfl < 0)
+		exit_error("open", *x, 1, 1);
+	(*x).pid = malloc(sizeof(pid_t) * (ac - 3));
+	if (!(*x).pid)
+		exit_error("malloc", *x, 1, 1);
+	(*x).prev_nb[0] = -1;
+	(*x).prev_nb[1] = -1;
+	(*x).n_pid = 0;
+}
+void	redirection(t_x *x, int i, int ac)
+{
+	if (i == 3)
+	{
+		if (dup2(x->infile, 0) == -1)
+			exit_error("dup2", *x, 1, 1);
+	}
+	else
+	{
+		if (dup2(x->prev_nb[0], 0) == -1)
+			exit_error("dup1", *x, 1, 1);
+	}
+	if (i == ac - 2)
+	{
+		if (dup2(x->outfl, 1) == -1)
+			exit_error("dup2", *x, 1, 1);
+	}
+	else
+	{
+		if (dup2(x->p_nb[1], 1) == -1)
+			exit_error("dup2", *x, 1, 1);
+	}
+	my_close((*x).infile, (*x).outfl, (*x).p_nb[0], (*x).p_nb[1]);
+	my_close((*x).prev_nb[0], (*x).prev_nb[1], -1, -1);
+}
+
+void	next(t_x *x)
+{
+	my_close((*x).prev_nb[0], (*x).prev_nb[1], (*x).p_nb[1], -1);
+	(*x).prev_nb[0] = (*x).p_nb[0];
+	(*x).prev_nb[1] = -1;
+	(*x).n_pid++;
+}
+
+void	my_wait(t_x *x)
+{
+	int	i;
+
+	i = -1;
+	while (i++ < (*x).n_pid - 1)
+		waitpid((*x).pid[i], NULL, 0);
+	free((*x).pid);
+}
 
 int	main(int ac, char **av, char **env)
 {
 	t_x		x;
 	int		i;
-	int		n_pid;
 
-	i = 1;
-	n_pid = 0;
+	i = 2;
 	if (ac < 5 || !*env)
 		return (1);
-	x.infile = open(av[1], O_RDONLY);
-	x.outfl = open(av[ac - 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (x.infile < 0 || x.outfl < 0)
-		exit_error("open", x, 1, 1);
-	x.pid = malloc(sizeof(pid_t) * (ac - 3));
-	if (!x.pid)
-		exit_error("malloc", x, 1, 1);
-	x.prev_nb[0] = -1;
-	x.prev_nb[1] = -1;
+	initialisation(&x, av, ac);
 	while (++i < ac - 1)
 	{
 		if (pipe(x.p_nb) < 0)
 			exit_error("pipe", x, 1, 1);
-		x.pid[n_pid] = fork();
-		if (x.pid[n_pid] < 0)
+		x.pid[x.n_pid] = fork();
+		if (x.pid[x.n_pid] < 0)
 			exit_error("fork", x, 1, 1);
-		if (x.pid[n_pid] == 0)
+		if (x.pid[x.n_pid] == 0)
 		{
-			if (i == 2)
-				dup2(x.infile, 0);
-			else
-				dup2(x.prev_nb[0], 0);
-			if (i == ac - 2)
-				dup2(x.outfl, 1);
-			else
-				dup2(x.p_nb[1], 1);
-			my_close(x.infile, x.outfl, x.p_nb[0], x.p_nb[1]);
-			my_close(x.prev_nb[0], x.prev_nb[1], -1, -1);
+			redirection(&x, i, ac);
 			do_cmd(x, env, i, av[i]);
 			exit_error(NULL, x, 1, 127);
 		}
 		else
-		{
-			my_close(x.prev_nb[0], x.prev_nb[1], x.p_nb[1], -1);
-			x.prev_nb[0] = x.p_nb[0];
-			x.prev_nb[1] = -1;
-			n_pid++;
-		}
+			next(&x);
 	}
-	i = -1;
-	while (i++ < n_pid - 1)
-		waitpid(x.pid[i], NULL, 0);
-	free(x.pid);
+	my_wait(&x);
 	return (0);
 }

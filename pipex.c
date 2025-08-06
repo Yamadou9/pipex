@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/12 12:55:00 by ydembele          #+#    #+#             */
-/*   Updated: 2025/08/05 16:12:28 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/08/06 16:16:35 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,7 +76,7 @@ void	first(char **av, t_x x, char **env)
 	if (!x.all_cmd)
 		exit_error(NULL, x, 0);
 	if (dup2(x.infile, 0) == -1 || dup2(x.p_nb[1], 1) == -1)
-		exit_error("dup2", x, 2);
+		exit_error("dccup2", x, 2);
 	close(x.infile);
 	execve(x.all_cmd, x.cmd, env);
 	close(x.p_nb[0]);
@@ -101,7 +101,7 @@ void	second(char **av, t_x x, char **env, pid_t to_wait)
 			exit_error(NULL, x, 1);
 		close(x.p_nb[1]);
 		if (dup2(x.outfl, 1) == -1 || dup2(x.p_nb[0], 0) == -1)
-			exit_error("dup2", x, 1);
+			exit_error("dccup2", x, 1);
 		my_close(x.outfl, x.p_nb[0], x.p_nb[1], -1);
 		execve(x.all_cmd, x.cmd, env);
 		exit_error("execve", x, 1);
@@ -117,8 +117,16 @@ int	main(int ac, char **av, char **env)
 	t_x		x;
 	int		status;
 
-	if (!*env || ac != 5)
-		return (1);
+	if (!*env)
+	{
+		write(2, "Environement manquant\n", 22);
+		return (0);
+	}
+	if (ac != 5)
+	{
+		write(2, "Nombre d'argument\n", 18);
+		return (0);
+	}
 	if (pipe(x.p_nb) == -1)
 		return (0);
 	null_function(&x);
