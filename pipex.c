@@ -115,7 +115,6 @@ int	main(int ac, char **av, char **env)
 {
 	pid_t	pid;
 	t_x		x;
-	int		status;
 
 	if (!*env)
 	{

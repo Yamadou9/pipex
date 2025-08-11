@@ -42,5 +42,7 @@ int		ft_strncmp(char *s1, char *s2, int n);
 void	free_all(char **str);
 void	my_close(int fd1, int fd2, int fd3, int fd4);
 void	null_function(t_x *x);
+char	*get_next_line(int fd);
+size_t	ft_strlen(const char *s);
 
 #endif
