@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 15:12:51 by ydembele          #+#    #+#             */
-/*   Updated: 2025/08/06 16:32:44 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/08/11 16:09:28 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,16 +18,25 @@ void	exit_error(char *msg, t_x x, int code)
 {
 	if (!msg)
 		printf("%s: command not found\n", x.cmd[0]);
-	else if (msg)
+	else
 		perror(msg);
 	if (x.all_cmd != NULL)
+	{
 		free(x.all_cmd);
+		x.all_cmd = NULL;
+	}
 	if (x.cmd != NULL)
+	{
 		free_all(x.cmd);
+		x.cmd = NULL;
+	}
+	if (x.pid != NULL)
+		free(x.pid);
 	my_close(x.outfl, x.p_nb[1], x.infile, x.p_nb[0]);
 	my_close(x.prev_nb[0], x.prev_nb[1], -1, -1);
 	exit(code);
 }
+
 
 char	*ft_env(char **env, char *cmd, t_x x)
 {
@@ -73,41 +82,53 @@ void	do_cmd(t_x x, char **env, char *commande)
 void	initialisation(t_x *x, char **av, int ac)
 {
 	null_function(x);
-	(*x).prev_nb[0] = -1;
-	(*x).prev_nb[1] = -1;
-	(*x).n_pid = 0;
-	(*x).p_nb[0] = -1;
-	(*x).p_nb[1] = -1;
-	(*x).infile = open(av[1], O_RDONLY);
-	(*x).outfl = open(av[ac - 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if ((*x).infile < 0 || (*x).outfl < 0)
+	x->prev_nb[0] = -1;
+	x->prev_nb[1] = -1;
+	x->n_pid = 0;
+	x->p_nb[0] = -1;
+	x->p_nb[1] = -1;
+	if (ft_strncmp(av[1], "here_doc", 8) != 0)
+	{
+		x->infile = open(av[1], O_RDONLY);
+		if (x->infile < 0)
+			exit_error("open", *x, 1);
+		x->outfl = open(av[ac - 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		x->i = 3;
+	}
+	else
+	{
+		x->infile = -1;
+		x->outfl = open(av[ac - 1], O_WRONLY | O_CREAT | O_APPEND, 0644);
+		x->i = 2;
+	}
+	if (x->outfl < 0)
 		exit_error("open", *x, 1);
-	(*x).pid = malloc(sizeof(pid_t) * (ac - 3));
-	if (!(*x).pid)
+	x->pid = malloc(sizeof(pid_t) * (ac - 3));
+	if (!x->pid)
 		exit_error("malloc", *x, 1);
-	
 }
-void	redirection(t_x *x, int i, int ac)
+
+void	redirection(t_x *x, int ac)
 {
-	if (i == 3)
+	if (x->i == 3)
 	{
 		if (dup2(x->infile, 0) == -1)
-			exit_error("dup2", *x, 1);
+			exit_error("dup1", *x, 1);
 	}
 	else
 	{
 		if (dup2(x->prev_nb[0], 0) == -1)
 			exit_error("dup2", *x, 1);
 	}
-	if (i == ac - 2)
+	if (x->i == ac - 2)
 	{
 		if (dup2(x->outfl, 1) == -1)
-			exit_error("dup2", *x, 1);
+			exit_error("dup3", *x, 1);
 	}
 	else
 	{
 		if (dup2(x->p_nb[1], 1) == -1)
-			exit_error("dup2", *x, 1);
+			exit_error("dup4", *x, 1);
 	}
 	my_close((*x).infile, (*x).outfl, (*x).p_nb[0], (*x).p_nb[1]);
 	my_close((*x).prev_nb[0], (*x).prev_nb[1], -1, -1);
@@ -121,65 +142,66 @@ void	next(t_x *x)
 	(*x).n_pid++;
 }
 
-void	my_wait(t_x *x)
+void my_wait(t_x *x)
 {
 	int	i;
 
-	i = -1;
+	i = 0;
 	my_close(x->p_nb[0], x->infile, x->outfl, -1);
-	while (i++ < (*x).n_pid - 1)
-		waitpid((*x).pid[i], NULL, 0);
-	free((*x).pid);
+	while (i < x->n_pid)
+	{
+		waitpid(x->pid[i], NULL, 0);
+		i++;
+	}
+	free(x->pid);
 }
 
-void	here_doc(char **av, t_x x)
+
+void	here_doc(char **av, t_x *x)
 {
-	char	*line;
-	pid_t	read;
 	int		fd[2];
 
-	if(pipe(fd) == -1)
-		exit_error("pipe", x, 1);
-	read = fork();
-	if (read == 0)
+	x->line = NULL;
+	if (pipe(fd) == -1)
+		exit_error("pipe", *x, 1);
+	if (fork() == 0)
 	{
 		close(fd[0]);
 		while (1)
 		{
-			free(line);
-			line = get_next_line(0);
-			if (ft_strncmp(line, av[2], ft_strlen(av[2])) == 0)
-				exit_error("gnl", x, 1);
-			write(fd[1], line, ft_strlen(line));
+			free(x->line);
+			x->line = get_next_line(0);
+			if (!x->line)
+				break ;
+			if (ft_strncmp(x->line, av[2], ft_strlen(av[2])) == 0
+				&& x->line[ft_strlen(av[2])] == '\n')
+			{
+				free(x->line);
+				exit(0);
+			}
+			write(fd[1], x->line, ft_strlen(x->line));
 		}
 		close(fd[1]);
-        exit(0);
+		exit(0);
 	}
 	else
 	{
 		close(fd[1]);
-        dup2(fd[0], STDIN_FILENO);
-        close(fd[0]);
-        wait(NULL);
+		x->prev_nb[0] = fd[0];
+		wait(NULL);
 	}
 }
 
 int	main(int ac, char **av, char **env)
 {
 	t_x		x;
-	int		i;
 
-	i = 2;
-	/*if (ac < 5 || !*env)
-		return (1);*/
-	
-	if (ft_strncmp(av[1], "here_doc", 8) == 0)
-	{
-		here_doc(av, x);
-		return (0);
-	}
+	if (ac < 5 || !*env)
+		return (1);
 	initialisation(&x, av, ac);
-	while (++i < ac - 1)
+	if (ft_strncmp(av[1], "here_doc", 8) == 0)
+		here_doc(av, &x);
+	while (++x.i < ac - 1)
 	{
 		if (pipe(x.p_nb) < 0)
 			exit_error("pipe", x, 1);
@@ -188,8 +210,8 @@ int	main(int ac, char **av, char **env)
 			exit_error("fork", x, 1);
 		if (x.pid[x.n_pid] == 0)
 		{
-			redirection(&x, i, ac);
-			do_cmd(x, env, av[i]);
+			redirection(&x, ac);
+			do_cmd(x, env, av[x.i]);
 			exit_error(NULL, x, 127);
 		}
 		else

@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 15:13:51 by ydembele          #+#    #+#             */
-/*   Updated: 2025/08/06 15:44:23 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/08/11 15:57:36 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ typedef struct t_pipex
 	int		*pid;
 	int		i;
 	int		n_pid;
+	char	*line;
 }	t_x;
 
 char	*ft_strjoin(char const *s1, char const *s2);
