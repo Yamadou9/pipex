@@ -1,0 +1,29 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug from pipex_bonus",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/pipex_bonus",
+            "args": ["infile.txt", "llll", "w", "/dev/stdout"],
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Build pipex_bonus",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "externalConsole": false,
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    // "text": "-enable-pretty-printing",
+                    // "text": "-enable-pretty-printing set follow-fork-mode child",
+                    "text": "set detach-on-fork off",
+                    "ignoreFailures": true
+                }
+            ],
+        },
+    ]
+}

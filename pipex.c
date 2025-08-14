@@ -76,7 +76,7 @@ void	first(char **av, t_x x, char **env)
 	if (!x.all_cmd)
 		exit_error(NULL, x, 0);
 	if (dup2(x.infile, 0) == -1 || dup2(x.p_nb[1], 1) == -1)
-		exit_error("dccup2", x, 2);
+		exit_error("dup2", x, 2);
 	close(x.infile);
 	execve(x.all_cmd, x.cmd, env);
 	close(x.p_nb[0]);
@@ -101,7 +101,7 @@ void	second(char **av, t_x x, char **env, pid_t to_wait)
 			exit_error(NULL, x, 1);
 		close(x.p_nb[1]);
 		if (dup2(x.outfl, 1) == -1 || dup2(x.p_nb[0], 0) == -1)
-			exit_error("dccup2", x, 1);
+			exit_error("dup2", x, 1);
 		my_close(x.outfl, x.p_nb[0], x.p_nb[1], -1);
 		execve(x.all_cmd, x.cmd, env);
 		exit_error("execve", x, 1);

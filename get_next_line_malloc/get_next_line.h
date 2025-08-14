@@ -21,7 +21,7 @@
 # include <fcntl.h>
 
 # ifndef BUFFER_SIZE
-#  define BUFFER_SIZE 1000000000
+#  define BUFFER_SIZE 32
 # endif
 
 int		ft_len(char *s, char c);

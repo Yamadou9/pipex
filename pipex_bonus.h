@@ -35,6 +35,7 @@ typedef struct t_pipex
 	int		i;
 	int		n_pid;
 	char	*line;
+	int		fd[2];
 }	t_x;
 
 char	*ft_strjoin(char const *s1, char const *s2);
@@ -45,5 +46,9 @@ void	my_close(int fd1, int fd2, int fd3, int fd4);
 void	null_function(t_x *x);
 char	*get_next_line(int fd);
 size_t	ft_strlen(const char *s);
+void	my_wait(t_x *x);
+void	next(t_x *x);
+void	initialisation(t_x *x, char **av, int ac);
+void	exit_error(char *msg, t_x x, int code);
 
 #endif
