@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 15:13:51 by ydembele          #+#    #+#             */
-/*   Updated: 2025/08/11 15:57:36 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/08/18 20:32:59 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,7 @@ size_t	ft_strlen(const char *s);
 void	my_wait(t_x *x);
 void	next(t_x *x);
 void	initialisation(t_x *x, char **av, int ac);
-void	exit_error(char *msg, t_x x, int code);
+void	exit_error(char *msg, t_x *x, int code);
+void	malloc_pid(t_x *x, int ac, char **av);
 
 #endif

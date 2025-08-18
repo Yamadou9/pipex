@@ -68,7 +68,7 @@ char	*next_line(char *tab, int fd, char *buffer)
 			return (free(buffer), NULL);
 		ft_buffer_rest(tab, tab);
 	}
-	while (!ft_strchr(res, '\n'))
+	while (ft_strchr(res, '\n') == 0)
 	{
 		t = read(fd, buffer, BUFFER_SIZE);
 		if (t <= 0)
@@ -85,42 +85,14 @@ char	*next_line(char *tab, int fd, char *buffer)
 char	*get_next_line(int fd)
 {
 	char		*next;
-	static char	*tab = NULL;
+	static char	tab[BUFFER_SIZE + 1];
 	char		*buffer;
 
 	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, 0, 0) < 0)
-		return (free(tab), tab = NULL, NULL);
-	if (!tab)
-	{
-		tab = malloc(sizeof(char) * (BUFFER_SIZE + 1));
-		if (!tab)
-			return (NULL);
-		tab[0] = '\0';
-	}
-	buffer = malloc(sizeof(char) * (BUFFER_SIZE + 1));
+		return (ft_metzero(tab), NULL);
+	buffer = malloc(sizeof(char) * BUFFER_SIZE + 1);
 	if (!buffer)
-		return (free(tab), tab = NULL, NULL);
+		return (NULL);
 	next = next_line(tab, fd, buffer);
-	if (!next || tab[0] == 0)
-	{
-		free(tab);
-		tab = NULL;
-		return (next);
-	}
 	return (next);
 }
-
-/*int	main(int ac, char **av)
-{
-	char *res;
-	int fd = open(av[1], O_RDONLY);
-	int i = 0;
-
-	while (i < 49)
-	{
-		res = get_next_line(fd);
-		printf("%s", res);
-		free(res);
-		i++;
-	}
-}*/

@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/04 16:13:14 by ydembele          #+#    #+#             */
-/*   Updated: 2025/08/06 15:39:00 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/08/18 20:32:29 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ void	null_function(t_x *x)
 	(*x).local = NULL;
 }
 
-void my_wait(t_x *x)
+void	my_wait(t_x *x)
 {
 	int	i;
 
@@ -44,6 +44,7 @@ void my_wait(t_x *x)
 		i++;
 	}
 	free(x->pid);
+	x->pid = NULL;
 }
 
 void	next(t_x *x)
@@ -72,7 +73,7 @@ void	initialisation(t_x *x, char **av, int ac)
 	{
 		x->infile = open(av[1], O_RDONLY);
 		if (x->infile < 0)
-			exit_error("open", *x, 1);
+			exit_error("open", x, 1);
 		x->outfl = open(av[ac - 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	}
 	else
@@ -81,8 +82,15 @@ void	initialisation(t_x *x, char **av, int ac)
 		x->outfl = open(av[ac - 1], O_WRONLY | O_CREAT | O_APPEND, 0644);
 	}
 	if (x->outfl < 0)
-		exit_error("open", *x, 1);
-	x->pid = malloc(sizeof(pid_t) * (ac - 3));
+		exit_error("open", x, 1);
+}
+
+void	malloc_pid(t_x *x, int ac, char **av)
+{
+	if (ft_strncmp(av[1], "here_doc", 8) != 0)
+		x->pid = malloc(sizeof(pid_t) * (ac - 3));
+	else
+		x->pid = malloc(sizeof(pid_t) * (ac - 4));
 	if (!x->pid)
-		exit_error("malloc", *x, 1);
+		exit_error("malloc", x, 1);
 }

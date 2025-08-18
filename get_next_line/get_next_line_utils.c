@@ -67,10 +67,7 @@ void	ft_buffer_rest(char *tab, char	*buffer)
 	i = 0;
 	j = ft_len(buffer, '\n');
 	if (ft_strchr(buffer, '\n') == 0)
-	{
-		tab[0] = 0;
-		return ;
-	}
+		return (ft_metzero(tab));
 	while (buffer[j])
 		tab[i++] = buffer[j++];
 	tab[i] = 0;
