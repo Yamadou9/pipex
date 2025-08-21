@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/28 16:49:15 by ydembele          #+#    #+#             */
-/*   Updated: 2025/07/19 16:36:51 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/08/21 22:01:52 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ size_t	len_set(char const *s, int o, char c)
 
 	i = 0;
 	while (s[o] && s[o] == c)
-				o++;
+		o++;
 	while (s[o] && s[o] != c)
 	{
 		i++;

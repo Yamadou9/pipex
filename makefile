@@ -7,7 +7,7 @@ RM = rm -f
 
 SRCS = ft_split.c ft_strjoin.c pipex.c pipex_utils.c
 
-BONUS_SRCS = ft_split.c ft_strjoin.c pipex_bonus.c pipex_utils_bonus.c \
+BONUS_SRCS = ft_split.c ft_strjoin.c pipex_bonus.c pipex_utils_bonus.c utils.c\
 	get_next_line/get_next_line.c \
 	get_next_line/get_next_line_utils.c
 

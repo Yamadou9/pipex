@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/04 16:13:14 by ydembele          #+#    #+#             */
-/*   Updated: 2025/08/18 20:32:29 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/08/21 21:54:20 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,19 +32,26 @@ void	null_function(t_x *x)
 	(*x).local = NULL;
 }
 
-void	my_wait(t_x *x)
+int	my_wait(t_x *x)
 {
 	int	i;
+	int	status;
+	int	exit_code;
 
+	exit_code = 0;
 	i = 0;
 	my_close(x->p_nb[0], x->infile, x->outfl, -1);
 	while (i < x->n_pid)
 	{
-		waitpid(x->pid[i], NULL, 0);
+		if (waitpid(x->pid[i], &status, 0) == -1)
+			exit_error("waitpid", x, 1);
+		if (i == x->n_pid - 1)
+			exit_code = (status & 0xFF00) >> 8;
 		i++;
 	}
 	free(x->pid);
 	x->pid = NULL;
+	return (exit_code);
 }
 
 void	next(t_x *x)
@@ -73,7 +80,10 @@ void	initialisation(t_x *x, char **av, int ac)
 	{
 		x->infile = open(av[1], O_RDONLY);
 		if (x->infile < 0)
-			exit_error("open", x, 1);
+		{
+			perror(av[1]);
+			x->infile = open("/dev/null", O_RDONLY);
+		}
 		x->outfl = open(av[ac - 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	}
 	else
@@ -82,15 +92,5 @@ void	initialisation(t_x *x, char **av, int ac)
 		x->outfl = open(av[ac - 1], O_WRONLY | O_CREAT | O_APPEND, 0644);
 	}
 	if (x->outfl < 0)
-		exit_error("open", x, 1);
-}
-
-void	malloc_pid(t_x *x, int ac, char **av)
-{
-	if (ft_strncmp(av[1], "here_doc", 8) != 0)
-		x->pid = malloc(sizeof(pid_t) * (ac - 3));
-	else
-		x->pid = malloc(sizeof(pid_t) * (ac - 4));
-	if (!x->pid)
-		exit_error("malloc", x, 1);
+		perror(av[ac - 1]);
 }

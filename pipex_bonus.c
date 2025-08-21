@@ -6,13 +6,11 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 15:12:51 by ydembele          #+#    #+#             */
-/*   Updated: 2025/08/18 20:43:49 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/08/21 21:50:33 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex_bonus.h"
-
-char	*ft_strslashjoin(char const *s1, char const *s2);
 
 void	exit_error(char *msg, t_x *x, int code)
 {
@@ -40,44 +38,15 @@ void	exit_error(char *msg, t_x *x, int code)
 	exit(code);
 }
 
-char	*ft_env(char **env, char *cmd, t_x x)
-{
-	x.local = NULL;
-	x.path = NULL;
-	x.i = 0;
-	while (env[x.i++])
-	{
-		if (ft_strncmp("PATH=", env[x.i], 5) == 0)
-		{
-			x.local = ft_split(env[x.i] + 5, ':');
-			if (!x.local)
-				return (0);
-		}
-	}
-	x.i = 0;
-	if (!x.local)
-		return (0);
-	while (x.local[x.i++])
-	{
-		x.path = ft_strslashjoin(x.local[x.i], cmd);
-		if (!x.path)
-			return (free_all(x.local), NULL);
-		if (access(x.path, F_OK | X_OK) == 0)
-			return (free_all(x.local), x.path);
-		free(x.path);
-	}
-	return (free_all(x.local), free(x.path), NULL);
-}
-
 void	do_cmd(t_x x, char **env, char *commande)
 {
 	x.cmd = ft_split(commande, ' ');
-	if (!x.cmd)
-		exit_error("split", &x, 1);
+	if (!x.cmd || !x.cmd[0])
+		exit_error("commande vide", &x, 127);
 	x.all_cmd = ft_env(env, x.cmd[0], x);
 	if (!x.all_cmd)
 	{
-		exit_error(NULL, &x, 1);
+		exit_error(NULL, &x, 127);
 	}
 	execve(x.all_cmd, x.cmd, env);
 	exit_error("execve", &x, 127);
@@ -109,27 +78,13 @@ void	redirection(t_x *x, int ac, int i)
 	my_close((*x).prev_nb[0], (*x).prev_nb[1], -1, -1);
 }
 
-void	pipe_fork(pid_t pid, t_x *x)
-{
-	if (pipe(x->fd) == -1)
-		exit_error("pipe", x, 1);
-	pid = fork();
-	if (pid == -1)
-		exit_error("fork", x, 1);
-}
-
-void	wait_doc(t_x *x, pid_t pid)
-{
-	close(x->fd[1]);
-	x->prev_nb[0] = x->fd[0];
-	waitpid(pid, NULL, 0);
-}
-
 void	here_doc(char **av, t_x *x)
 {
 	pid_t	pid;
 
-	pipe_fork(pid, x);
+	if (pipe(x->fd) == -1)
+		exit_error("pipe", x, 1);
+	pid = fork();
 	if (pid == 0)
 	{
 		close(x->fd[0]);
@@ -185,6 +140,5 @@ int	main(int ac, char **av, char **env)
 		else
 			next(&x);
 	}
-	my_wait(&x);
-	return (0);
+	return (my_wait(&x));
 }

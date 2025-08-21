@@ -6,7 +6,7 @@
 /*   By: ydembele <ydembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 15:13:51 by ydembele          #+#    #+#             */
-/*   Updated: 2025/08/18 20:32:59 by ydembele         ###   ########.fr       */
+/*   Updated: 2025/08/21 21:56:27 by ydembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,10 +46,14 @@ void	my_close(int fd1, int fd2, int fd3, int fd4);
 void	null_function(t_x *x);
 char	*get_next_line(int fd);
 size_t	ft_strlen(const char *s);
-void	my_wait(t_x *x);
+int		my_wait(t_x *x);
 void	next(t_x *x);
 void	initialisation(t_x *x, char **av, int ac);
 void	exit_error(char *msg, t_x *x, int code);
 void	malloc_pid(t_x *x, int ac, char **av);
+void	pipe_fork(pid_t pid, t_x *x);
+void	wait_doc(t_x *x, pid_t pid);
+char	*ft_env(char **env, char *cmd, t_x x);
+char	*ft_strslashjoin(char const *s1, char const *s2);
 
 #endif
